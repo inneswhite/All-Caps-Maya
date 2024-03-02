@@ -1,43 +1,56 @@
-from PySide2 import QtCore
 from PySide2.QtWidgets import *
-import pymel.core as pm
-import maya.OpenMayaUI as omui
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
-import shiboken2
-import cap_tool
+import maya_tools.cap_tool
+from maya_tools.cap_tool import maya_cap
+import ui.lib.ui_utils as utils
+import importlib
+import pymel.core as pm
 
+importlib.reload(maya_tools.cap_tool)
 tool_name = "Cap Tool"
 
-def maya_main_window():
-    mainWindowPointer = omui.MQtUtil.mainWindow()
-    return shiboken2.wrapInstance(int(mainWindowPointer), QWidget)
-
 class CapToolUI(MayaQWidgetDockableMixin, QDialog):
-    def __init__(self, parent=maya_main_window()):
+    def __init__(self, parent=utils.maya_main_window()):
+        ##TODO Switch out depending on Maya or 3ds Max
         super(CapToolUI,self).__init__(parent)
 
         self.setWindowTitle(tool_name)
         self.setGeometry(100, 100, 300, 200)
 
         self.create_widgets()
+        self.init_callbacks()
         self.create_layout()
         self.set_window_size()
+
+        self.destroyed.connect(self.on_destroyed)
 
     def create_widgets(self):
         self.cap_type_group_box = QGroupBox("Cap Type")
 
         self.fan_button = QPushButton("Fan")
-        self.fan_button.clicked.connect(cap_tool.create_fan_cap)
+        self.fan_button.clicked.connect(maya_cap.create_fan_cap)
+        self.fan_button.setEnabled(maya_cap.valid_selection())
 
         self.strip_button = QPushButton("Strip")
+        self.strip_button.setEnabled(maya_cap.valid_selection())
+
         self.grid_button = QPushButton("Grid")
+        self.grid_button.setEnabled(maya_cap.valid_selection())
+
         self.optimised_button = QPushButton("Optimised")
+        self.optimised_button.setEnabled(maya_cap.valid_selection())
 
         self.ok_button = self.create_generic_button("OK")
         self.ok_button.clicked.connect(self.confirm)
 
         self.cancel_button = self.create_generic_button("Cancel")
         self.cancel_button.clicked.connect(self.close)
+
+    def set_button_states(self):
+        self.fan_button.setEnabled(maya_cap.valid_selection())
+        self.strip_button.setEnabled(maya_cap.valid_selection())
+        self.grid_button.setEnabled(maya_cap.valid_selection())
+        self.optimised_button.setEnabled(maya_cap.valid_selection())
     
     def create_layout(self):
         cap_type_layout = QHBoxLayout()
@@ -73,6 +86,12 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         print("todo")
         self.close()
 
+    def on_destroyed(self):
+        self.deleteLater()
+
+    """ CALLBACKS """
+    def init_callbacks(self):
+        selection_changed_cb = pm.scriptJob(event=["SelectionChanged", self.set_button_states])
 
 cap_tool_ui = CapToolUI()
 
