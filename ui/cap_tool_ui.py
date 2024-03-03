@@ -9,6 +9,8 @@ import pymel.core as pm
 importlib.reload(maya_tools.cap_tool)
 tool_name = "Cap Tool"
 
+#TODO: Display the number of tris/ faces created
+
 class CapToolUI(MayaQWidgetDockableMixin, QDialog):
     def __init__(self, parent=utils.maya_main_window()):
         ##TODO Switch out depending on Maya or 3ds Max
@@ -29,17 +31,19 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
 
         self.fan_button = QPushButton("Fan")
         self.fan_button.clicked.connect(maya_cap.create_fan_cap)
-        self.fan_button.setEnabled(maya_cap.valid_selection())
+        self.fan_button.setEnabled(maya_cap.validate_selection())
 
         self.strip_button = QPushButton("Strip")
-        self.strip_button.setEnabled(maya_cap.valid_selection())
+        self.strip_button.clicked.connect(maya_cap.create_strip_cap)
+        self.strip_button.setEnabled(maya_cap.validate_selection())
 
         self.grid_button = QPushButton("Grid")
-        self.grid_button.setEnabled(maya_cap.valid_selection())
+        self.grid_button.setEnabled(maya_cap.validate_selection())
 
         self.optimised_button = QPushButton("Optimised")
-        self.optimised_button.setEnabled(maya_cap.valid_selection())
+        self.optimised_button.setEnabled(maya_cap.validate_selection())
 
+        #TODO: Add apply button
         self.ok_button = self.create_generic_button("OK")
         self.ok_button.clicked.connect(self.confirm)
 
@@ -47,10 +51,10 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         self.cancel_button.clicked.connect(self.close)
 
     def set_button_states(self):
-        self.fan_button.setEnabled(maya_cap.valid_selection())
-        self.strip_button.setEnabled(maya_cap.valid_selection())
-        self.grid_button.setEnabled(maya_cap.valid_selection())
-        self.optimised_button.setEnabled(maya_cap.valid_selection())
+        self.fan_button.setEnabled(maya_cap.validate_selection())
+        self.strip_button.setEnabled(maya_cap.validate_selection())
+        self.grid_button.setEnabled(maya_cap.validate_selection())
+        self.optimised_button.setEnabled(maya_cap.validate_selection())
     
     def create_layout(self):
         cap_type_layout = QHBoxLayout()
