@@ -127,6 +127,4 @@ class MayaCap:
             return
         self.enable_xray(self.cap_mesh, False)
 
-
 maya_cap = MayaCap()
-maya_cap.create_strip_cap()
