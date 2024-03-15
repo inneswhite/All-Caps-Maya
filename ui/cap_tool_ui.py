@@ -53,7 +53,7 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         self.fan_button.setEnabled(maya_cap.validate_selection())
         self.strip_button.setEnabled(maya_cap.validate_selection())
         self.grid_button.setEnabled(maya_cap.validate_selection())
-        self.optimised_button.setEnabled(maya_cap.validate_selection())
+        self.max_area_button.setEnabled(maya_cap.validate_selection())
     
     def create_layout(self):
         cap_type_layout = QHBoxLayout()
