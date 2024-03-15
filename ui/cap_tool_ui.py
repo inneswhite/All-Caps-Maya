@@ -1,13 +1,21 @@
+#TODO Refactor import statements
 from PySide2.QtWidgets import *
+from PySide2 import QtGui
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
-import maya_tools.cap_tool
 from maya_tools.cap_tool import maya_cap
 import ui.lib.ui_utils as utils
-import importlib
+
 import pymel.core as pm
 
-importlib.reload(maya_tools.cap_tool)
+
+
 tool_name = "Cap Tool"
+
+def reload_imports():
+    from importlib import reload
+    reload(maya_tools.cap_tool)
+    reload(ui.lib.ui_utils)
+    reload(utils)
 
 #TODO: Display the number of tris/ faces created
 
@@ -28,20 +36,11 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
 
     def create_widgets(self):
         self.cap_type_group_box = QGroupBox("Cap Type")
-
-        self.fan_button = QPushButton("Fan")
-        self.fan_button.clicked.connect(maya_cap.create_fan_cap)
-        self.fan_button.setEnabled(maya_cap.validate_selection())
-
-        self.strip_button = QPushButton("Strip")
-        self.strip_button.clicked.connect(maya_cap.create_strip_cap)
-        self.strip_button.setEnabled(maya_cap.validate_selection())
-
-        self.grid_button = QPushButton("Grid")
-        self.grid_button.setEnabled(maya_cap.validate_selection())
-
-        self.optimised_button = QPushButton("Optimised")
-        self.optimised_button.setEnabled(maya_cap.validate_selection())
+        
+        self.fan_button = self.create_cap_button(maya_cap.create_fan_cap, "", "icon-fan.png")
+        self.strip_button = self.create_cap_button(maya_cap.create_strip_cap, "", "icon-strip.png")
+        self.grid_button = self.create_cap_button(self.default_cap_action, "", "icon-grid.png")
+        self.max_area_button = self.create_cap_button(self.default_cap_action, "", "icon-max-area.png")
 
         #TODO: Add apply button
         self.ok_button = self.create_generic_button("OK")
@@ -61,7 +60,7 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         cap_type_layout.addWidget(self.fan_button)
         cap_type_layout.addWidget(self.strip_button)
         cap_type_layout.addWidget(self.grid_button)
-        cap_type_layout.addWidget(self.optimised_button)
+        cap_type_layout.addWidget(self.max_area_button)
 
         self.cap_type_group_box.setLayout(cap_type_layout)
 
@@ -79,11 +78,24 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
     def set_window_size(self):
         self.adjustSize()
 
-    def create_generic_button(self, name):
+    def create_generic_button(self, name="button"):
         generic_button = QPushButton(name)
         generic_button.setMinimumSize(70,0)
         generic_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed,)
         return generic_button
+    
+    def default_cap_action(self):
+        print("No method assigned to cap button")
+    
+    def create_cap_button(self, clicked_method=default_cap_action, name="cap_button", icon_filename=""):
+        cap_button = QPushButton(name)
+        cap_button.clicked.connect(clicked_method)
+        cap_button.setEnabled(maya_cap.validate_selection())
+
+        if icon_filename != "":
+            cap_icon = QtGui.QIcon(utils.get_icon_file(icon_filename))
+            cap_button.setIcon(cap_icon)
+        return cap_button
     
     def confirm(self):
         #TODO set up ok button functionality
@@ -104,3 +116,4 @@ def create_ui():
 
 if __name__ == "__main__":
     create_ui()
+    reload_imports()

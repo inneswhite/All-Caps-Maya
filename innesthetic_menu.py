@@ -19,4 +19,7 @@ def create_menu():
     innesthetic_menu = InnestheticMenu()
 
 if __name__ == "__main__":
+    from importlib import reload
+    reload(cap_tool_ui)
     create_menu()
+
