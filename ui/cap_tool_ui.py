@@ -46,6 +46,7 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         self.edge_selection_info_icon.setPixmap(info_icon.pixmap(32, 32))
 
         # Cap Type Selection
+        # TODO Highlight selected cap
         self.cap_type_gb = QGroupBox("Cap Type")
 
         self.fan_button = self.create_cap_button(Cap_Type.fan, "", "icon-fan.png")
@@ -55,6 +56,12 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
             Cap_Type.max_area, "", "icon-max-area.png"
         )
 
+        # Cap Options
+        self.cap_options_gb = QGroupBox("Cap Options")
+        self.rotate_cap_lb = QLabel("Rotate Cap:")
+        self.rotate_cap_sb = QSpinBox()
+
+        # OK Cancel Apply
         self.ok_button = self.create_generic_button("OK", self.confirm)
         self.cancel_button = self.create_generic_button("Cancel", self.cancel)
         self.apply_button = self.create_generic_button("Apply")
@@ -81,6 +88,11 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         cap_type_layout.addWidget(self.grid_button)
         cap_type_layout.addWidget(self.max_area_button)
 
+        # --- Cap Options
+        cap_options_layout = QHBoxLayout()
+        cap_options_layout.addWidget(self.rotate_cap_lb)
+        cap_options_layout.addWidget(self.rotate_cap_sb)
+
         # --- OK CLOSE APPLY
         self.ok_close_layout = QHBoxLayout()
         spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -92,11 +104,13 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         # Group Boxes
         self.make_edge_selection_gb.setLayout(make_edge_selection_layout)
         self.cap_type_gb.setLayout(cap_type_layout)
+        self.cap_options_gb.setLayout(cap_options_layout)
 
         # Main Layout
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.make_edge_selection_gb)
         main_layout.addWidget(self.cap_type_gb)
+        main_layout.addWidget(self.cap_options_gb)
         main_layout.addLayout(self.ok_close_layout)
         self.setLayout(main_layout)
 

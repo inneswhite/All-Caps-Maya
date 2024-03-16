@@ -96,11 +96,8 @@ class MayaCap:
                 pm.polyCreateFacet(p=[prime_vert, next_vert, cap_center_pos])
             )
 
-        print("CapFaces: {}".format(cap_faces))
         # combine all new faces into a single mesh
         self.cap_mesh = self.form_cap(cap_faces)
-
-        self.enable_xray(self.cap_mesh, True)
 
     def create_strip_cap(self):
         vertices_len = len(self.base_vertices)
@@ -114,8 +111,8 @@ class MayaCap:
 
         cap_faces = []
         n_faces = floor((vertices_len - 2) * 0.25)
-        print(n_faces)
-        # right-side
+
+        # draw faces on right side
         for vert_index in range(0, n_faces):
             cap_faces.append(
                 pm.polyCreateFacet(
@@ -177,18 +174,217 @@ class MayaCap:
             )
 
         self.cap_mesh = self.form_cap(cap_faces)
-        self.enable_xray(self.cap_mesh, True)
 
     def create_grid_cap(self):
-        self.selection_is_made = True
-        pass
+        vertices_count = len(self.base_vertices)
+        last_vert_i = vertices_count - 1
+
+        halfway_vert_i = floor(vertices_count * 0.5)
+
+        vertices_pos = []
+        for vertex in self.base_vertices:
+            vertices_pos.append(pm.pointPosition(vertex))
+
+        cap_faces = []
+        n_faces = floor((vertices_count - 2) * 0.25) - 1
+
+        # create new verts down the middle
+        middle_verts = []
+        for vert_i in range(0, n_faces + 1):
+            middle_verts.append(
+                (vertices_pos[vert_i] + vertices_pos[halfway_vert_i - vert_i]) * 0.5,
+            )
+
+        for vert_i in range(0, (n_faces)):
+            middle_verts.append(
+                (
+                    vertices_pos[last_vert_i - vert_i]
+                    + vertices_pos[halfway_vert_i + (vert_i + 1)]
+                )
+                * 0.5,
+            )
+
+        # Draw grid faces
+        # right faces
+        for f in range(0, n_faces):
+            cap_faces.extend(
+                [
+                    # bottom-right
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[f],
+                            vertices_pos[f + 1],
+                            middle_verts[f + 1],
+                            middle_verts[f],
+                        ]
+                    ),
+                    # top-right
+                    pm.polyCreateFacet(
+                        p=[
+                            middle_verts[f],
+                            middle_verts[f + 1],
+                            vertices_pos[halfway_vert_i - 1 - f],
+                            vertices_pos[halfway_vert_i - f],
+                        ]
+                    ),
+                ]
+            )
+
+            # left starters
+        cap_faces.extend(
+            [
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[0],
+                        middle_verts[0],
+                        middle_verts[n_faces + 1],
+                        vertices_pos[last_vert_i],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        middle_verts[0],
+                        vertices_pos[halfway_vert_i],
+                        vertices_pos[halfway_vert_i + 1],
+                        middle_verts[n_faces + 1],
+                    ]
+                ),
+            ]
+        )
+
+        #   bottom - left
+        for f in range(1, n_faces):
+            cap_faces.extend(
+                [
+                    # top-left
+                    pm.polyCreateFacet(
+                        p=[
+                            middle_verts[n_faces + f],
+                            vertices_pos[halfway_vert_i + f],
+                            vertices_pos[halfway_vert_i + f + 1],
+                            middle_verts[n_faces + f + 1],
+                        ]
+                    ),
+                    # bottom-left
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[last_vert_i - f + 1],
+                            middle_verts[n_faces + f],
+                            middle_verts[n_faces + 1 + f],
+                            vertices_pos[last_vert_i - f],
+                        ]
+                    ),
+                ]
+            )
+
+        # end faces
+        quarter_vert_i = floor(halfway_vert_i * 0.5)
+        three_quarter_vert_i = halfway_vert_i + quarter_vert_i
+        if vertices_count % 4 == 0:
+            cap_faces.extend(
+                [
+                    # top-right
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[quarter_vert_i],
+                            vertices_pos[quarter_vert_i + 1],
+                            vertices_pos[quarter_vert_i + 2],
+                            middle_verts[n_faces],
+                        ]
+                    ),
+                    # bottom-right
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[quarter_vert_i],
+                            middle_verts[n_faces],
+                            vertices_pos[quarter_vert_i - 2],
+                            vertices_pos[quarter_vert_i - 1],
+                        ]
+                    ),
+                    # top-left
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[three_quarter_vert_i],
+                            vertices_pos[three_quarter_vert_i + 1],
+                            vertices_pos[three_quarter_vert_i + 2],
+                            middle_verts[n_faces * 2],
+                        ]
+                    ),
+                    # bottom-left
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[three_quarter_vert_i],
+                            middle_verts[n_faces * 2],
+                            vertices_pos[three_quarter_vert_i - 2],
+                            vertices_pos[three_quarter_vert_i - 1],
+                        ]
+                    ),
+                ]
+            )
+        # right
+        elif vertices_count % 2 == 0:
+            floor_quart_vert = floor(quarter_vert_i)
+            floor_3_quart_vert = floor(three_quarter_vert_i)
+            cap_faces.extend(
+                [
+                    # right-top-tri
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[floor_quart_vert - 1],
+                            vertices_pos[floor_quart_vert],
+                            middle_verts[n_faces],
+                        ]
+                    ),
+                    # right-mid-tri
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[floor_quart_vert],
+                            vertices_pos[floor_quart_vert + 1],
+                            middle_verts[n_faces],
+                        ]
+                    ),
+                    # right-bottom-tri
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[floor_quart_vert + 1],
+                            vertices_pos[floor_quart_vert + 2],
+                            middle_verts[n_faces],
+                        ]
+                    ),
+                    # left-top-tri
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[floor_3_quart_vert - 1],
+                            vertices_pos[floor_3_quart_vert],
+                            middle_verts[n_faces * 2],
+                        ]
+                    ),
+                    # left-mid-tri
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[floor_3_quart_vert],
+                            vertices_pos[floor_3_quart_vert + 1],
+                            middle_verts[n_faces * 2],
+                        ]
+                    ),
+                    # left-bottom-tri
+                    pm.polyCreateFacet(
+                        p=[
+                            vertices_pos[floor_3_quart_vert + 1],
+                            vertices_pos[floor_3_quart_vert + 2],
+                            middle_verts[n_faces * 2],
+                        ]
+                    ),
+                ]
+            )
+        self.cap_mesh = self.form_cap(cap_faces)
 
     def create_max_area_cap(self):
         self.selection_is_made = True
         pass
 
     def confirm_cap(self):
-        """#TODO"""
+        """# TODO"""
         pm.undoInfo(closeChunk=True)
 
     def revert_state(self):
