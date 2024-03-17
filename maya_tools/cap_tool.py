@@ -384,9 +384,247 @@ class MayaCap:
             )
         self.cap_mesh = self.form_cap(cap_faces)
 
-    def create_max_area_cap(self):
-        self.selection_is_made = True
+    def recurse_tri(self, tri_face):
         pass
+
+    def create_max_area_cap(self):
+        vertices_count = len(self.base_vertices)
+        last_vert_i = vertices_count - 1
+
+        halfway_vert_i = floor(vertices_count * 0.5)
+
+        vertices_pos = []
+        for vertex in self.base_vertices:
+            vertices_pos.append(pm.pointPosition(vertex))
+
+        cap_faces = []
+        n_faces = floor((vertices_count - 2) * 0.25) - 1
+
+        # while remaining verts < 4
+        # center tri
+        third = ceil(vertices_count / 3)
+        two_third = floor(vertices_count / 3 * 2)
+        n_tri_levels = int(log2(vertices_count / 3) + 1)
+
+        """
+        # PLACEHOLDER Currently only works for 24 verts/edges
+        # level 0 (main tri)
+        cap_faces.append(
+            pm.polyCreateFacet(
+                p=[
+                    vertices_pos[0],
+                    vertices_pos[third],
+                    vertices_pos[two_third],
+                ]
+            )
+        )
+
+        # level 1
+        level = 2
+        cap_faces.extend(
+            [
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[0],
+                        vertices_pos[4],
+                        vertices_pos[8],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[8],
+                        vertices_pos[12],
+                        vertices_pos[16],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[16],
+                        vertices_pos[20],
+                        vertices_pos[0],
+                    ]
+                ),
+            ]
+        )
+
+        # level 2
+        cap_faces.extend(
+            [
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[0],
+                        vertices_pos[2],
+                        vertices_pos[4],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[4],
+                        vertices_pos[6],
+                        vertices_pos[8],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[8],
+                        vertices_pos[10],
+                        vertices_pos[12],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[12],
+                        vertices_pos[14],
+                        vertices_pos[16],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[16],
+                        vertices_pos[18],
+                        vertices_pos[20],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[20],
+                        vertices_pos[22],
+                        vertices_pos[0],
+                    ]
+                ),
+            ]
+        )
+        # level 3
+        cap_faces.extend(
+            [
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[0],
+                        vertices_pos[1],
+                        vertices_pos[2],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[2],
+                        vertices_pos[3],
+                        vertices_pos[4],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[4],
+                        vertices_pos[5],
+                        vertices_pos[6],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[6],
+                        vertices_pos[7],
+                        vertices_pos[8],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[8],
+                        vertices_pos[9],
+                        vertices_pos[10],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[10],
+                        vertices_pos[11],
+                        vertices_pos[12],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[12],
+                        vertices_pos[13],
+                        vertices_pos[14],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[14],
+                        vertices_pos[15],
+                        vertices_pos[16],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[16],
+                        vertices_pos[17],
+                        vertices_pos[18],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[18],
+                        vertices_pos[19],
+                        vertices_pos[20],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[20],
+                        vertices_pos[21],
+                        vertices_pos[22],
+                    ]
+                ),
+                pm.polyCreateFacet(
+                    p=[
+                        vertices_pos[22],
+                        vertices_pos[23],
+                        vertices_pos[0],
+                    ]
+                ),
+            ]
+        )
+        """
+        vertices_pos.append(vertices_pos[0])
+        vertices_pos.append(vertices_pos[1])
+
+        # n_tri_levels
+        for l in range(0, 4):
+            step = 2**l
+            print("level {} and step {}".format(l, step))
+            for v in range(0, vertices_count, step):
+                if v % (step * 2):
+                    cap_faces.append(
+                        pm.polyCreateFacet(
+                            p=[
+                                vertices_pos[v - l**l],
+                                vertices_pos[(v - l**l) + step],
+                                vertices_pos[(v - l**l) + step * 2],
+                            ]
+                        )
+                    )
+
+        # TODO procedurally calculate triangle fractal
+        """ for l in range(1, n_tri_levels):
+            cap_faces.append([])  # create a new level in cap faces
+            n_faces_at_level = int(3 * 2 ** (l - 1))
+            print("At level {} there will be {} faces".format(l, n_faces_at_level))
+            for f in range(0, n_faces_at_level):
+                
+                parent_tri_level = cap_faces[l - 1]
+
+                apex_vert = parent_tri_level[]
+
+                cap_faces[l].append(
+                    pm.polyCreateFacet(
+                        p=[
+                            parent_tri_level[f][f],
+                            parent_tri_level[f][ceil_third],
+                            parent_tri_level[floor_2third],
+                        ]
+                    )
+                ) """
+
+        print(n_tri_levels)
 
     def confirm_cap(self):
         """# TODO"""
@@ -438,4 +676,4 @@ maya_cap = MayaCap()
 
 if __name__ == "__main__":
 
-    maya_cap.create_cap(Cap_Type.grid)
+    maya_cap.create_cap(Cap_Type.max_area)
