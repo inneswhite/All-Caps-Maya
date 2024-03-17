@@ -24,6 +24,7 @@ class MayaCap:
     base_mesh = None
     base_vertices = None
     cap_mesh = None
+    rotation_offset = 0
     undoChunk = None
     print("still updates?")
 
@@ -38,6 +39,10 @@ class MayaCap:
             ),
             flatten=True,
         )
+
+    def shift_array(self, arr, shift_value):
+        shift_value = shift_value * -1
+        return arr[shift_value:] + arr[:shift_value]
 
     def enable_xray(self, mesh, bool):
         pm.select(mesh)
@@ -391,7 +396,7 @@ class MayaCap:
         pm.undoInfo(closeChunk=True)
         pm.undo()
 
-    def create_cap(self, cap_type: Cap_Type):
+    def create_cap(self, cap_type: Cap_Type, rot_offset=0):
         """Performs the generic operations required for all cap types, before building the cap type defined in the argument
 
         Args:
@@ -406,6 +411,9 @@ class MayaCap:
         self.selection_is_made = True
         pm.undoInfo(chunkName="Create_Cap", openChunk=True, infinity=True)
         self.populate_selections()
+
+        self.rotation_offset = rot_offset
+
         # link up possible cap types to respective methods
         cap_types = {
             "fan": self.create_fan_cap,

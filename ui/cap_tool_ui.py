@@ -8,7 +8,7 @@ import ui.lib.ui_utils as utils
 
 import pymel.core as pm
 
-tool_name = "Cap Tool"
+tool_name = "All Caps | Cap Generator "
 
 # TODO: Display the number of tris/ faces created
 import importlib
@@ -26,6 +26,7 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         super(CapToolUI, self).__init__(parent)
 
         self.maya_cap = maya_cap
+        self.active_cap_button = None
         self.setWindowTitle(tool_name)
         self.setGeometry(100, 100, 300, 200)
 
@@ -49,6 +50,7 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         # TODO Highlight selected cap
         self.cap_type_gb = QGroupBox("Cap Type")
 
+        self.cap_buttons = []  # this is populated during the create_cap_button method
         self.fan_button = self.create_cap_button(Cap_Type.fan, "", "icon-fan.png")
         self.strip_button = self.create_cap_button(Cap_Type.strip, "", "icon-strip.png")
         self.grid_button = self.create_cap_button(Cap_Type.grid, "", "icon-grid.png")
@@ -58,8 +60,9 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
 
         # Cap Options
         self.cap_options_gb = QGroupBox("Cap Options")
-        self.rotate_cap_lb = QLabel("Rotate Cap:")
+        self.rotate_cap_lb = QLabel("Cap Rotation Offset:")
         self.rotate_cap_sb = QSpinBox()
+        self.rotate_cap_sb.setFixedWidth(40)
 
         # OK Cancel Apply
         self.ok_button = self.create_generic_button("OK", self.confirm)
@@ -75,6 +78,7 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         self.make_edge_selection_gb.setHidden(self.maya_cap.validate_selection())
 
     def create_layout(self):
+        spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         # Widgets -> Layouts
         # --- Edge Selection Infobox
         make_edge_selection_layout = QHBoxLayout()
@@ -92,10 +96,10 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         cap_options_layout = QHBoxLayout()
         cap_options_layout.addWidget(self.rotate_cap_lb)
         cap_options_layout.addWidget(self.rotate_cap_sb)
+        cap_options_layout.addItem(spacer)
 
         # --- OK CLOSE APPLY
         self.ok_close_layout = QHBoxLayout()
-        spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.ok_close_layout.addItem(spacer)
         self.ok_close_layout.addWidget(self.ok_button)
         self.ok_close_layout.addWidget(self.cancel_button)
@@ -130,16 +134,52 @@ class CapToolUI(MayaQWidgetDockableMixin, QDialog):
         generic_button.clicked.connect(clicked_method)
         return generic_button
 
+    def on_cap_button_pressed(
+        self, cap_button: QPushButton, cap_type=Cap_Type.undefined
+    ):
+        if self.active_cap_button == None:  # if no button is active yet
+            print("no button active, activating {}".format(cap_button.icon().name()))
+            self.active_cap_button = cap_button
+            cap_button.setStyleSheet("background-color: #5285a6")
+            self.maya_cap.create_cap(cap_type)
+        elif (
+            self.active_cap_button == cap_button
+        ):  # if button is active, and it is me, then disable
+            print("Disabling {}".format(cap_button))
+            self.active_cap_button = None
+            cap_button.setStyleSheet("background-color: black")
+        elif (
+            self.active_cap_button != None and self.active_cap_button != cap_button
+        ):  # if another button is active
+            print(
+                "{} is disabled, activating {}".format(
+                    self.active_cap_button, cap_button
+                )
+            )
+            old_active_cap_button = self.active_cap_button
+            old_active_cap_button.setStyleSheet(
+                "QPushButton { background-color: #black}"
+            )
+            self.active_cap_button = cap_button
+            cap_button.setStyleSheet("background-color: #5285a6")
+            self.maya_cap.create_cap(cap_type, self.rotate_cap_sb.value)
+
     def create_cap_button(
-        self, cap_type=Cap_Type.fan, name="cap_button", icon_filename=""
+        self, cap_type=Cap_Type.undefined, name="cap_button", icon_filename=""
     ):
         cap_button = QPushButton(name)
-        cap_button.clicked.connect(lambda: self.maya_cap.create_cap(cap_type))
+        cap_button.setStyleSheet(
+            "QPushButton:checked { background-color: #5285a6} QPushButton:pressed { background-color: #5285a6}"
+        )
+        cap_button.clicked.connect(
+            lambda: self.on_cap_button_pressed(cap_button, cap_type)
+        )
         cap_button.setEnabled(self.maya_cap.validate_selection())
 
         if icon_filename != "":
             cap_icon = QtGui.QIcon(utils.get_icon_file(icon_filename))
             cap_button.setIcon(cap_icon)
+        self.cap_buttons.append(cap_button)
         return cap_button
 
     def confirm(self):
