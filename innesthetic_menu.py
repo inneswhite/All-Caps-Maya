@@ -4,7 +4,7 @@ import ui.cap_tool_ui as cap_tool_ui
 class InnestheticMenu:
     def __init__(self):
         self.menu_name = "Innesthetic"
-        self.cap_tool_menu_item = {"label": "Cap Tool", "command": self.launch_cap_tool}
+        self.cap_tool_menu_item = {"label": "ALL_CAPS", "command": self.launch_cap_tool}
 
         if pm.menu(self.menu_name, exists=True):
             pm.deleteUI(self.menu_name)

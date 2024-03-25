@@ -436,7 +436,7 @@ class MayaCap:
                             ]
                         )
                     )
-        print(n_tri_levels)
+        self.cap_mesh = self.form_cap(cap_faces)
 
     def confirm_cap(self):
         """# TODO"""
